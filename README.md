@@ -2,7 +2,7 @@
 # Multi-tier-commission-tracking# Subsystem 11 — Multi-Tier Commission Tracking
 
 > **Team Rocket** | Object-Oriented Analysis and Design | April 2026  
-> Ankur · Anshool · Suraj · Amrith
+> Ankur · Anshool · Anirudh Suraj · Amrith
 
 ---
 
