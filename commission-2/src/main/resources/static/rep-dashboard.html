@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Representative Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1, h2 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px;}
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;}
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #3498db; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; margin-right: 5px; margin-bottom: 10px;}
+        .btn-danger { background-color: #e74c3c; }
+        .btn-success { background-color: #27ae60; }
+        .section-box { background-color: #e8f4f8; padding: 20px; border-radius: 4px; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white;}
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; font-size: 12px;}
+        th { background-color: #2c3e50; color: white; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a href="/index.html" style="text-decoration:none;">&larr; Sign Out</a>
+    <h1>Sales Representative Dashboard</h1>
+    <h2>1. Log a Transaction</h2>
+    <div class="grid-2">
+        <div class="form-group"><label>My Agent ID</label><input type="text" id="agentId" value="A123"></div>
+        <div class="form-group"><label>Total Sales Volume</label><input type="number" id="salesAmount" placeholder="e.g. 100000"></div>
+        <div class="form-group">
+            <label>Currency</label>
+            <select id="currency">
+                <option value="INR">INR (₹)</option><option value="USD">USD ($)</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Co-Agent ID</label><input type="text" id="coAgentId"></div>
+        <div class="form-group"><label>Split Ratio (1.0 = 100%)</label><input type="number" id="splitRatio" step="0.1" value="1.0"></div>
+    </div>
+    <button class="btn-success" onclick="calculateCommission()">Process Sale</button>
+    <button onclick="viewReport()">View My Statements</button>
+    <div id="outputSection" class="section-box" style="display: none;"></div>
+</div>
+
+<script>
+    async function calculateCommission() {
+        const agentId = document.getElementById('agentId').value;
+        const sales = document.getElementById('salesAmount').value;
+        const curr = document.getElementById('currency').value;
+        const coId = document.getElementById('coAgentId').value;
+        const split = document.getElementById('splitRatio').value;
+        if(!agentId || !sales) return alert("Missing Data");
+        
+        let url = `/api/commission/calculate?agentId=${agentId}&sales=${sales}&currency=${curr}&splitRatio=${split}`;
+        if(coId) url += `&coAgentId=${coId}`;
+
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            const out = document.getElementById('outputSection');
+            out.style.display = 'block';
+            out.innerHTML = `<h3>Success</h3><p>Commission: ${data.calculatedCommission} ${data.currency}</p><p>${data.message}</p>`;
+        } catch (e) { alert("Server error."); }
+    }
+
+    async function viewReport() {
+        const agentId = document.getElementById('agentId').value;
+        try {
+            const res = await fetch(`/api/commission/report?agentId=${agentId}`);
+            const data = await res.json();
+            let html = `<h3>Statement History</h3><table><tr><th>ID (Trunc)</th><th>Date</th><th>Sales</th><th>Commission</th><th>Note</th></tr>`;
+            data.forEach(r => {
+                html += `<tr><td>${r.commissionId.substring(0,8)}</td><td>${new Date(r.calculatedAt).toLocaleString()}</td><td>₹${r.totalSales}</td><td>₹${r.totalCommission}</td><td>${r.tierBreakdown}</td></tr>`;
+            });
+            html += `</table>`;
+            document.getElementById('outputSection').style.display = 'block';
+            document.getElementById('outputSection').innerHTML = html;
+        } catch (e) { alert("Error."); }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Executive Admin Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1, h2 { color: #e67e22; border-bottom: 2px solid #eee; padding-bottom: 10px;}
+        button { background-color: #e67e22; color: white; border: none; padding: 12px 20px; cursor: pointer; border-radius: 4px; font-weight: bold; margin-bottom: 10px;}
+        .btn-danger { background-color: #e74c3c; }
+        .btn-success { background-color: #27ae60; }
+        .section-box { background-color: #fdf2e9; padding: 20px; border-radius: 4px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a href="/index.html" style="text-decoration:none;">&larr; Sign Out</a>
+    <h1>Executive Admin Dashboard</h1>
+    <h2>Strategic Operations</h2>
+    <button onclick="viewAnalytics()">View Global KPI Analytics</button>
+    <button class="btn-success" onclick="window.open('/api/commission/payroll-export', '_blank')">Export Payroll (JSON)</button>
+    <button class="btn-danger" onclick="executeClawback()">Execute System Clawback</button>
+
+    <div id="outputSection" class="section-box" style="display: none;"></div>
+    <br><a href="/tier-config.html" style="font-weight:bold; color:#2980b9;">⚙️ Modify Commission Tier Rules &rarr;</a>
+</div>
+
+<script>
+    async function viewAnalytics() {
+        try {
+            const res = await fetch(`/api/commission/analytics`);
+            const data = await res.json();
+            const out = document.getElementById('outputSection');
+            out.style.display = 'block';
+            out.innerHTML = `<h3>Company KPIs</h3>
+                             <p><strong>Transactions:</strong> ${data.metrics.totalTransactionsProcessed}</p>
+                             <p><strong>Sales Volume:</strong> ₹${data.metrics.totalCompanySalesVolume}</p>
+                             <p><strong>Payouts:</strong> ₹${data.metrics.totalCommissionsPaidOut}</p>
+                             <p><strong>Ratio:</strong> ${data.metrics.averageCommissionPayoutRatio}</p>`;
+        } catch (e) { alert("Error."); }
+    }
+
+    async function executeClawback() {
+        const id = prompt("Enter the FULL Commission UUID to reverse:");
+        if(!id) return;
+        try {
+            const res = await fetch(`/api/commission/clawback?originalCommissionId=${id}`, { method: 'POST' });
+            const data = await res.json();
+            alert("Success! Amount Deducted: ₹" + data.deductedAmount);
+        } catch (e) { alert("Clawback failed."); }
+    }
+</script>
+</body>
+</html>
